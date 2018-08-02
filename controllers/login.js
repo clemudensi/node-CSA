@@ -1,11 +1,11 @@
 /* eslint-disable consistent-return */
 const jwt = require('jsonwebtoken');
-const User = require('../models/localLogin');
+const UserAuth = require('../models/Users');
 const settings = require('../config/settings');
 
 module.exports = {
   login(req, res) {
-    User.findOne({
+    UserAuth.findOne({
       'local.email': req.body.email,
     }, (err, user) => {
       if (err) throw err;
@@ -17,7 +17,7 @@ module.exports = {
         if (isMatch && !err) {
           // if user is found and password is right create a token
           const token = jwt.sign(user.toJSON(), settings.secret, {
-            expiresIn: 60 * 120,
+            expiresIn: '180m',
           });
           res.setHeader('x-auth-token', ('JWT ' + token));
           // return the information including token as JSON

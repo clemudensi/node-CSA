@@ -5,11 +5,11 @@ const bcrypt = require('bcrypt-nodejs');
 const Schema = mongoose.Schema;
 
 // define the schema for our user model
-const userSchema = new Schema({
+const UserSchema = new Schema({
   local: {
     email: {
       type: String,
-      // trim: true, unique: true,
+      // unique: true,
       match: /^\w+([-]?\w+)*@\w+([-]?\w+)*(\.\w{2,3})+$/,
     },
     password: String,
@@ -35,26 +35,26 @@ const userSchema = new Schema({
 });
 
 // generating a hash
-userSchema.methods.generateHash = password => bcrypt.hashSync(
+UserSchema.methods.generateHash = password => bcrypt.hashSync(
   password, bcrypt.genSaltSync(8), null,
 );
 
-userSchema.methods.comparePassword = function (candidatePassword, cb) {
+UserSchema.methods.comparePassword = function (candidatePassword, cb) {
   bcrypt.compare(candidatePassword, this.local.password, (err, isMatch) => {
     if (err) return cb(err);
     cb(null, isMatch);
   });
 };
 
-userSchema.methods.validPassword = function(password) {
+UserSchema.methods.validPassword = function (password) {
   return bcrypt.compareSync(password, this.local.password);
 };
 
 // facebook authenticate
-userSchema.statics.upsertFbUser = function(accessToken, refreshToken, profile, cb) {
+UserSchema.statics.upsertFbUser = function (accessToken, refreshToken, profile, cb) {
   const That = this;
   return this.findOne({
-    'facebookProvider.id': profile.id,
+    'facebook.facebookProvider.id': profile.id,
   }, (err, user) => {
     if (!user) {
       const newUser = new That({
@@ -69,7 +69,7 @@ userSchema.statics.upsertFbUser = function(accessToken, refreshToken, profile, c
         },
       });
 
-      newUser.save(function(error, savedUser) {
+      newUser.save((error, savedUser) => {
         if (error) {
           return error;
         }
@@ -82,5 +82,9 @@ userSchema.statics.upsertFbUser = function(accessToken, refreshToken, profile, c
 };
 
 // create the model for users and expose it to our app
-const LocalAuth = mongoose.model('LocalAuth', userSchema);
-module.exports = LocalAuth;
+const UserAuth = mongoose.model('UserAuth', UserSchema);
+
+module.exports = UserAuth;
+
+
+// todo - set necessary required index

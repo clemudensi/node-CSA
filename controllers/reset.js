@@ -1,3 +1,4 @@
+/* eslint-disable consistent-return,no-param-reassign */
 const async = require('async');
 const nodemailer = require('nodemailer');
 const User = require('../models/RegisterUser');
@@ -5,7 +6,10 @@ const login = require('../controllers/login');
 
 module.exports = {
   index(req, res) {
-    User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, (err, user) => {
+    User.findOne({
+      resetPasswordToken: req.params.token,
+      resetPasswordExpires: { $gt: Date.now() },
+    }, (err, user) => {
       if (!user) {
         req.send('error', 'Password reset token is invalid or has expired.');
         return res.render('/forgot');
@@ -18,8 +22,11 @@ module.exports = {
 
   resetPassword(req, res) {
     async.waterfall([
-      function (done) {
-        User.findOne({ resetPasswordToken: req.params.token, resetPasswordExpires: { $gt: Date.now() } }, (err, user) => {
+      function () {
+        User.findOne({
+          resetPasswordToken: req.params.token,
+          resetPasswordExpires: { $gt: Date.now() },
+        }, (err, user) => {
           if (!user) {
             req.send('error', 'Password reset token is invalid or has expired.');
             return res.render('back');
@@ -52,7 +59,7 @@ module.exports = {
           done(err);
         });
       },
-    ], (req) => {
+    ], () => {
       req.render('/');
     });
   },

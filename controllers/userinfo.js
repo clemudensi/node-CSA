@@ -1,4 +1,8 @@
+/* eslint-disable prefer-destructuring */
+const mongo = require('mongodb');
 const UserInfo = require('../models/userInfo');
+
+const ObjectId = mongo.ObjectId;
 
 module.exports = {
   index(req, res) {
@@ -10,7 +14,8 @@ module.exports = {
 
   async createUserInfo(req, res) {
     const newUserInfo = new UserInfo({
-      'user.age': req.body.age,
+      'user.user_id': ObjectId(req.body.user_id),
+      'user.DOB': new Date(req.body.age),
       'user.location': {
         state: req.body.state,
         city: req.body.city,
@@ -39,20 +44,20 @@ module.exports = {
     const userInfo = req.body;
     const updUserInfo = {};
 
-    if (userInfo) {
-      updUserInfo.user.DOB = userInfo.DOB;
-      updUserInfo.user.location = {
+    const updateUserInfo = {
+      'user.user_id': ObjectId(userInfo.user_id),
+      'user.DOB': userInfo.DOB,
+      'user.location': {
         state: userInfo.state,
         city: userInfo.city,
         zip_code: userInfo.zip_code,
-      };
-      updUserInfo.user.occupation = userInfo.occupation;
-      updUserInfo.campaign_duration = userInfo.campaign_duration;
-    }
+      },
+      'user.occupation': userInfo.occupation,
+    };
 
     if (!updUserInfo) res.send({ msg: 'information was not updated' });
     try {
-      const info = await UserInfo.findByIdAndUpdate(req.params.id);
+      const info = await UserInfo.findByIdAndUpdate(req.params.id, updateUserInfo, { new: true });
       res.send(info);
     } catch (err) {
       res.send({ msg: 'error occurred retrieving your information' });
@@ -68,15 +73,23 @@ module.exports = {
     }
   },
 
-  async followCampaign(req, res) {
-    const toggleFollowCampaign = new UserInfo({
-      follow: req.body.follow,
-    });
+  async followCampaign(req, res, next) {
     try {
-      const likeCampaign = await toggleFollowCampaign.findByIdAndUpdate(req.params.id);
-      res.send(likeCampaign);
+      const follow = req.body.follow;
+      const toggleFollowCampaign = new UserInfo({
+        follow: !req.body.follow,
+      });
+      if (follow === true) {
+        const likeCampaign = await toggleFollowCampaign.findByIdAndUpdate(req.params.id);
+        res.send(likeCampaign);
+      }
+      if (follow === false) {
+        const likeCampaign = await toggleFollowCampaign.findByIdAndRemove(req.params.id);
+        res.send({ msg: 'You have unfollowed this campaign', likeCampaign });
+      }
     } catch (err) {
       res.send({ msg: 'Unable to follow or like campaign' });
     }
+    next();
   },
 };
